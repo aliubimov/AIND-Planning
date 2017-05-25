@@ -550,13 +550,41 @@ class PlanningGraph():
         # TODO implement
         # for each goal in the problem, determine the level cost, then add them together
 
+
         for goal in self.problem.goal:
             level = 0
             s_goal = PgNode_s(goal, True)
 
             for s_level in self.s_levels:
-                level =+ 1
                 if s_goal in s_level:
-                    level_sum =+ level
+                    break
+                else:
+                    level += 1
+
+            level_sum += level
+
+        return level_sum
+
+    def h_levelmin(self) -> int:
+        """The minium of the level costs of the individual goals
+
+        :return: int
+        """
+        level_sum = 1000
+        # TODO implement
+        # for each goal in the problem, determine the level cost, then add them together
+
+
+        for goal in self.problem.goal:
+            level = 0
+            s_goal = PgNode_s(goal, True)
+
+            for s_level in self.s_levels:
+                if s_goal in s_level:
+                    break
+                else:
+                    level += 1
+
+            level_sum = min(level_sum, level)
 
         return level_sum

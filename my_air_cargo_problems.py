@@ -96,7 +96,7 @@ class AirCargoProblem(Problem):
                         effect_add = [expr("At({}, {})".format(c, a))]
                         effect_rem = [expr("In({}, {})".format(c, p))]
 
-                        unload = Action(expr("Unoad({}, {}, {})".format(c, p, a)),
+                        unload = Action(expr("Unload({}, {}, {})".format(c, p, a)),
                                 [precond_pos, precond_neg],
                                 [effect_add, effect_rem])
 
@@ -117,6 +117,7 @@ class AirCargoProblem(Problem):
                             precond_pos = [expr("At({}, {})".format(p, fr)),
                                            ]
                             precond_neg = []
+
                             effect_add = [expr("At({}, {})".format(p, to))]
                             effect_rem = [expr("At({}, {})".format(p, fr))]
                             fly = Action(expr("Fly({}, {}, {})".format(p, fr, to)),
@@ -222,10 +223,106 @@ class AirCargoProblem(Problem):
         executed.
         """
         # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
-        count = 0
-        return count
+
+        class RelaxedAirCargoProblem(AirCargoProblem):
+
+            def __init__(self, problem: AirCargoProblem, state):
+                AirCargoProblem.__init__(self, problem.cargos, problem.planes, problem.airports, state, goal=problem.goal)
+
+        def get_actions(self):
+            """
+            This method creates concrete actions (no variables) for all actions in the problem
+            domain action schema and turns them into complete Action objects as defined in the
+            aimacode.planning module. It is computationally expensive to call this method directly;
+            however, it is called in the constructor and the results cached in the `actions_list` property.
+
+            Returns:
+            ----------
+            list<Action>
+                list of Action objects
+            """
+            def load_actions():
+                """Create all concrete Load actions and return a list
+
+                :return: list of Action objects
+                """
+                loads = []
+                # TODO create all load ground actions from the domain Load action
+
+                for c in self.cargos:
+                    for p in self.planes:
+                        for a in self.airports:
+                            precond_pos = []
+                            precond_neg = []
+
+                            effect_add = [expr("In({}, {})".format(c, p))]
+                            effect_rem = [expr("At({}, {})".format(c, a))]
+
+                            load = Action(expr("Load({}, {}, {})".format(c, p, a)),
+                                    [precond_pos, precond_neg],
+                                    [effect_add, effect_rem])
+
+                            loads.append(load)
+
+                return loads
+
+            def unload_actions():
+                """Create all concrete Unload actions and return a list
+
+                :return: list of Action objects
+                """
+                unloads = []
+                # TODO create all Unload ground actions from the domain Unload action
+
+                for c in self.cargos:
+                    for p in self.planes:
+                        for a in self.airports:
+                            precond_pos = []
+                            precond_neg = []
+
+                            effect_add = [expr("At({}, {})".format(c, a))]
+                            effect_rem = [expr("In({}, {})".format(c, p))]
+
+                            unload = Action(expr("Unload({}, {}, {})".format(c, p, a)),
+                                    [precond_pos, precond_neg],
+                                    [effect_add, effect_rem])
+
+                            unloads.append(unload)
+
+                return unloads
+
+            def fly_actions():
+                """Create all concrete Fly actions and return a list
+
+                :return: list of Action objects
+                """
+                flys = []
+                for fr in self.airports:
+                    for to in self.airports:
+                        if fr != to:
+                            for p in self.planes:
+                                precond_pos = []
+                                precond_neg = []
+
+                                effect_add = [expr("At({}, {})".format(p, to))]
+                                effect_rem = [expr("At({}, {})".format(p, fr))]
+
+                                fly = Action(expr("Fly({}, {}, {})".format(p, fr, to)),
+                                             [precond_pos, precond_neg],
+                                             [effect_add, effect_rem])
+                                flys.append(fly)
+                return flys
+
+            return load_actions() + unload_actions() + fly_actions()
+
+        pg = PlanningGraph(RelaxedAirCargoProblem(self, decode_state(node.state, self.state_map)), node.state)
+        pg_levelmin = pg.h_levelmin()
+
+        return pg_levelmin
 
 
+
+        
 def air_cargo_p1() -> AirCargoProblem:
     cargos = ['C1', 'C2']
     planes = ['P1', 'P2']
